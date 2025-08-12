@@ -1,10 +1,12 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
-  return (
-    <div>
-      Home
-    </div>
-  )
-}
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate("/seller");
+  }, []);
+  return "";
+};
 
-export default Home
+export default Home;

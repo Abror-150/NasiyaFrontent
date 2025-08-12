@@ -1,4 +1,4 @@
-import LogoImage from "../assets/images/index";
+import { LogoImage } from "../assets/images/index";
 
 export default function Loading() {
   return (
