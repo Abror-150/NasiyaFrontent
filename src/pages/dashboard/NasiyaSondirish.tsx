@@ -6,6 +6,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { API } from "../../hooks/getEnv";
 import { ArrowLeft, ChevronRight, Check, X } from "lucide-react";
+import { LoadingOutlined } from "@ant-design/icons";
 
 const onlyDigits = (s: string) => s.replace(/[^\d]/g, "");
 const formatUZS = (n: number) =>
@@ -45,19 +46,7 @@ type Month = {
 type DebtSchedule = { id: string; plan: Month[]; remainingTotal?: number };
 type DueMonth = Month & { remainingForMonth: number; monthNo: number };
 
-function Modal({
-  open,
-  onClose,
-  title,
-  children,
-  footer,
-}: {
-  open: boolean;
-  onClose: () => void;
-  title?: string;
-  children?: React.ReactNode;
-  footer?: React.ReactNode;
-}) {
+function Modal({ open, onClose, title, children, footer }: any) {
   if (!open) return null;
   return (
     <div
@@ -87,6 +76,25 @@ function Modal({
   );
 }
 
+/** Frontda planni lokal yangilash helper */
+const updateLocalDebt = (
+  plan: Month[],
+  month: number,
+  payThis: number
+): Month[] => {
+  return plan.map((m) => {
+    if (m.monthNo === month) {
+      const newPartial = m.partialAmount + payThis;
+      return {
+        ...m,
+        partialAmount: newPartial,
+        status: newPartial >= m.amount ? "PAID" : "PENDING",
+      };
+    }
+    return m;
+  });
+};
+
 export default function NasiyaSondirish() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -101,14 +109,14 @@ export default function NasiyaSondirish() {
   const anyAmountNum = Number(anyAmount || 0);
 
   const [picked, setPicked] = useState<Record<string, boolean>>({});
+  const qc = useQueryClient();
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   const { data, isLoading, isError } = useQuery<DebtSchedule>({
     queryKey: ["debt", "schedule", id],
     enabled: !!token && !!id,
     queryFn: async () => {
-      const res = await axios.get(`${API}/debt/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`${API}/debt/${id}`, { headers });
       const r = res.data as any;
 
       const rawList: any[] =
@@ -122,7 +130,6 @@ export default function NasiyaSondirish() {
             monthNo: oy.month,
           }))
         ) ?? [];
-      console.log(rawList, "raw");
 
       const plan: Month[] = rawList.map((x: any, i: number) => ({
         id: x.id ?? crypto.randomUUID(),
@@ -132,7 +139,6 @@ export default function NasiyaSondirish() {
         status: x.status,
         monthNo: Number(x.monthNo ?? i + 1),
       }));
-      console.log(plan, "plan");
 
       return { id: r?.id ?? String(id), plan } as DebtSchedule;
     },
@@ -147,7 +153,9 @@ export default function NasiyaSondirish() {
       .sort((a, b) => a.monthNo - b.monthNo)
       .map((m) => ({
         ...m,
-        remainingForMonth: clamp((m.amount || 0) - (m.partialAmount || 0)),
+        remainingForMonth: clamp(
+          Number(m.amount || 0) - Number(m.partialAmount || 0)
+        ),
       }))
       .filter(
         (m) =>
@@ -155,18 +163,18 @@ export default function NasiyaSondirish() {
           m.remainingForMonth > 0
       );
   }, [data]);
-  console.log(monthsDue, "due");
 
   const nextMonth = monthsDue[0];
-  console.log(nextMonth, "next");
-
   const nextAmount = nextMonth?.remainingForMonth ?? 0;
 
   const pickedMonthNos = useMemo(
-    () => monthsDue.filter((m) => picked[m.id]).map((m) => m.monthNo),
+    () =>
+      monthsDue
+        .filter((m) => picked[m.id])
+        .map((m) => m.monthNo)
+        .sort((a, b) => a - b),
     [picked, monthsDue]
   );
-  console.log(pickedMonthNos, "sdg");
 
   const pickedTotal = useMemo(
     () =>
@@ -186,11 +194,11 @@ export default function NasiyaSondirish() {
     setPicked(obj);
   };
 
-  const qc = useQueryClient();
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const todayISO = new Date().toISOString().slice(0, 10);
 
-  const commonFields = {
-    date: new Date().toISOString(),
+  const refreshDebt = () => {
+    qc.invalidateQueries({ queryKey: ["debt", "schedule", id] });
+    qc.invalidateQueries({ queryKey: ["mijoz", "debts"] });
   };
 
   const payOne = useMutation({
@@ -198,16 +206,26 @@ export default function NasiyaSondirish() {
       if (!id) throw new Error("Debt topilmadi");
       return axios.post(
         `${API}/tolovlar/one-month`,
-        { debtId: id, method: "ONE_MONTH", ...commonFields },
+        { debtId: id, method: "ONE_MONTH", date: todayISO },
         { headers }
       );
     },
     onSuccess: () => {
-      toast.success("1 oylik to‘lov qabul qilindi");
-      setMOne(false);
-      qc.invalidateQueries({ queryKey: ["debt", "schedule", id] });
-      qc.invalidateQueries({ queryKey: ["mijoz", "debts"] });
+      qc.setQueryData<DebtSchedule>(["debt", "schedule", id], (old) => {
+        if (!old) return old;
+        const idx = old.plan
+          .sort((a, b) => a.monthNo - b.monthNo)
+          .findIndex((m) => m.amount - m.partialAmount > 0);
+        if (idx < 0) return old;
+
+        const m = old.plan[idx];
+        const payThis = clamp(m.amount - m.partialAmount);
+        return { ...old, plan: updateLocalDebt(old.plan, m.monthNo, payThis) };
+      });
+
       navigate("/succes");
+      setMOne(false);
+      refreshDebt();
     },
     onError: (e: any) =>
       toast.error(e?.response?.data?.message || "To‘lovda xatolik"),
@@ -218,16 +236,33 @@ export default function NasiyaSondirish() {
       if (!id || !amount || amount <= 0) throw new Error("Miqdor noto‘g‘ri");
       return axios.post(
         `${API}/tolovlar/custom`,
-        { debtId: id, amount, method: "CUSTOM", ...commonFields },
+        { debtId: id, amount, method: "CUSTOM", date: todayISO },
         { headers }
       );
     },
-    onSuccess: () => {
-      toast.success("To‘lov qabul qilindi");
+    onSuccess: (_, amount) => {
+      qc.setQueryData<DebtSchedule>(["debt", "schedule", id], (old) => {
+        if (!old) return old;
+        let left = amount;
+        let updated = [...old.plan];
+
+        for (const m of [...old.plan].sort((a, b) => a.monthNo - b.monthNo)) {
+          if (left <= 0) break;
+          const need = m.amount - m.partialAmount;
+          if (need <= 0) continue;
+
+          const payThis = Math.min(need, left);
+          left -= payThis;
+          updated = updateLocalDebt(updated, m.monthNo, payThis);
+        }
+
+        return { ...old, plan: updated };
+      });
+
       setMAny(false);
-      qc.invalidateQueries({ queryKey: ["debt", "schedule", id] });
-      qc.invalidateQueries({ queryKey: ["mijoz", "debts"] });
       navigate("/succes");
+
+      refreshDebt();
     },
     onError: (e: any) =>
       toast.error(e?.response?.data?.message || "To‘lovda xatolik"),
@@ -241,30 +276,46 @@ export default function NasiyaSondirish() {
         `${API}/tolovlar/multi-month`,
         {
           debtId: id,
-          months: pickedMonthNos,
           method: "MULTI_MONTH",
-          ...commonFields,
+          date: new Date().toISOString().split("T")[0],
+          months: pickedMonthNos,
         },
         { headers }
       );
     },
     onSuccess: () => {
-      toast.success("Tanlangan oylar so‘ndirildi");
-      setMPick(false);
-      qc.invalidateQueries({ queryKey: ["debt", "schedule", id] });
-      qc.invalidateQueries({ queryKey: ["mijoz", "debts"] });
+      qc.setQueryData<DebtSchedule>(["debt", "schedule", id], (old) => {
+        if (!old) return old;
+        let updated = [...old.plan];
+
+        for (const m of old.plan.filter((x) =>
+          pickedMonthNos.includes(x.monthNo)
+        )) {
+          const remaining = m.amount - m.partialAmount;
+          if (remaining > 0) {
+            updated = updateLocalDebt(updated, m.monthNo, remaining);
+          }
+        }
+
+        return { ...old, plan: updated };
+      });
+
       navigate("/succes");
+
+      setMPick(false);
+      refreshDebt();
     },
     onError: (e: any) =>
       toast.error(e?.response?.data?.message || "To‘lovda xatolik"),
   });
 
-  if (isLoading)
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        Yuklanmoqda…
+      <div className="containers min-h-[100dvh] flex items-center justify-center">
+        <LoadingOutlined className="text-3xl text-slate-400 animate-spin" />
       </div>
     );
+  }
   if (isError || !data)
     return <div className="p-4 text-red-600">Ma’lumot topilmadi</div>;
 
@@ -343,9 +394,7 @@ export default function NasiyaSondirish() {
         onClose={() => setMAny(false)}
         title="Har qanday miqdorda so‘ndirish"
       >
-        <div className="text-[14px] text-slate-700 mb-2">
-          Miqdorni kiriting *
-        </div>
+        <div className="text-[14px] text-slate-700 mb-2">Miqdor*</div>
         <input
           type="tel"
           inputMode="numeric"
@@ -398,7 +447,7 @@ export default function NasiyaSondirish() {
             </div>
 
             <div className="max-h-[320px] overflow-y-auto -mx-1 px-1">
-              {monthsDue.map((m, i) => {
+              {monthsDue.map((m) => {
                 const checked = !!picked[m.id];
                 return (
                   <label

@@ -7,6 +7,8 @@ import CreateNasiya from "../pages/dashboard/CreateNasiya";
 import Mijoz from "../pages/dashboard/Mijoz";
 import NasiyaDetail from "../pages/dashboard/NasiyaDetail";
 import NasiyaSondirish from "../pages/dashboard/NasiyaSondirish";
+import NotificationMessage from "../pages/dashboard/report/Message";
+import Notification from "../pages/dashboard/report/Notification";
 export const paths = {
   home: "/",
   login: "/login",
@@ -21,6 +23,9 @@ export const paths = {
   nasiyaOne: "/debt/:id",
   debtSon: "/debt/close/:id",
   succes: "/succes",
+  mijozUpdate: "/mijoz/edit/:id",
+  debtPayment: "/mijoz/:id/debt/:debtId/payment",
+  notificationMessage: "/hisobot/:mijozId",
 };
 
 export const DashboardLists = [
@@ -73,6 +78,22 @@ export const DashboardLists = [
     id: 10,
     path: paths.succes,
     element: <SuccessPage />,
+  },
+  {
+    id: 11,
+    path: paths.mijozUpdate,
+    element: <CreateMijoz />,
+  },
+
+  {
+    id: 13,
+    path: paths.hisobot,
+    element: <Notification />,
+  },
+  {
+    id: 12,
+    path: paths.notificationMessage,
+    element: <NotificationMessage />,
   },
 ];
 

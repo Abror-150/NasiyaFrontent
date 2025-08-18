@@ -27,7 +27,7 @@ export default function Mijoz() {
   type ClientStats = { grandTotal: number; list: Item[] };
 
   const { data, isLoading, isError } = useQuery<ClientStats>({
-    queryKey: ["mijoz"],
+    queryKey: ["mijoz", "list"],
     queryFn: async () => {
       const res = await axios.get(`${API}/mijoz`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -57,15 +57,26 @@ export default function Mijoz() {
 
   const list = data?.list ?? [];
 
+  const [sortByNameAsc, setSortByNameAsc] = useState(true);
+
   const filtered: Item[] = useMemo(() => {
-    if (!search.trim()) return list;
-    const s = search.toLowerCase();
-    return list.filter(
-      (x) =>
-        x.name.toLowerCase().includes(s) ||
-        (x.phone || "").toLowerCase().includes(s)
+    let items = list;
+
+    if (search.trim()) {
+      const s = search.toLowerCase();
+      items = items.filter(
+        (x) =>
+          x.name.toLowerCase().includes(s) ||
+          (x.phone || "").toLowerCase().includes(s)
+      );
+    }
+
+    return [...items].sort((a, b) =>
+      sortByNameAsc
+        ? a.name.localeCompare(b.name, "uz", { sensitivity: "base" })
+        : b.name.localeCompare(a.name, "uz", { sensitivity: "base" })
     );
-  }, [list, search]);
+  }, [list, search, sortByNameAsc]);
 
   if (isLoading) {
     return (
@@ -117,10 +128,11 @@ export default function Mijoz() {
               </div>
             </div>
             <button
+              onClick={() => setSortByNameAsc((prev) => !prev)}
               className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm active:scale-[0.98]"
               title="Filter"
             >
-             <SortIcon/>
+              <SortIcon />
             </button>
           </div>
         </div>
@@ -130,15 +142,16 @@ export default function Mijoz() {
         {filtered.map((item) => (
           <ClientCardLike key={item.mijozId} item={item} />
         ))}
-        <div className="flex justify-end">
-          <button
-            onClick={handleCreateCLientClikc}
-            className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-[#3B82F6] text-white px-5 h-12 shadow-lg active:scale-[0.98]"
-            title="Yaratish"
-          >
-            <UserPlus size={20} />
-            Yaratish
-          </button>
+        <div className="containers relative">
+          <div className="flex justify-end">
+            <button
+              onClick={handleCreateCLientClikc}
+              className="fixed bottom-20 md:right-[calc((100%-var(--container-width))/2)] inline-flex items-center gap-2 rounded-full bg-[#3B82F6] text-white px-5 h-12 shadow-lg active:scale-[0.98] z-50"
+            >
+              <UserPlus size={20} />
+              Yaratish
+            </button>
+          </div>
         </div>
 
         {filtered.length === 0 && (
@@ -182,7 +195,7 @@ function ClientCardLike({ item }: { item: Item }) {
         <button
           className="shrink-0 text-amber-400"
           title="Sevimlilar"
-          onClick={(e) => e.stopPropagation()} // ← kartani bosib yubormasin
+          onClick={(e) => e.stopPropagation()}
         >
           <svg
             className="h-5 w-5"

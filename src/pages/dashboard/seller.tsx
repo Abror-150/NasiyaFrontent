@@ -9,9 +9,10 @@ import { formatDebtFull } from "../../components/DebtFormat";
 import { useState } from "react";
 import { Eye, EyeOff, Plus } from "lucide-react";
 const Seller = () => {
-  const { data } = useGetSellers();
+  const { data: seller } = useGetSellers();
 
   const { data: dashboard } = useGetTolovlarDashboard();
+
   const navigate = useNavigate();
   const [showTotal, setShowTotal] = useState(true);
   const toggleTotal = () => setShowTotal((s) => !s);
@@ -21,14 +22,15 @@ const Seller = () => {
   return (
     <div className="containers h-[100vh]">
       <div className="pt-[50px] flex justify-between">
-        <div className="flex ">
-          {/* <img
-            src={`http://3.89.123.52/images/${data?.img}`}
+        <div className="flex gap-[10px] ">
+          <img
+            className="rounded-full w-[40px] h-[40px]"
+            src={`${seller?.img}`}
             width={40}
             height={40}
-          /> */}
-          <Heading classList="!font-bold" tag="h2">
-            {data?.userName}
+          />
+          <Heading classList="!font-bold !pt-[5px]" tag="h2">
+            {seller?.userName}
           </Heading>
         </div>
         <button onClick={handleCalendarClick}>
@@ -93,7 +95,8 @@ const Seller = () => {
           <div className="flex flex-col items-start justify-center ml-4 flex-grow">
             <p className="text-[14px] text-gray-600 mb-1">Hisobingizda</p>
             <p className="text-[24px] font-bold text-black">
-              300 000 <span className="text-[18px] font-medium">so‘m</span>
+              {seller?.balance}
+              <span className="text-[18px] font-medium">so‘m</span>
             </p>
           </div>
 

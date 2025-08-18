@@ -14,6 +14,7 @@ export const useGetSellers = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log(res.data);
 
       return res.data;
     },

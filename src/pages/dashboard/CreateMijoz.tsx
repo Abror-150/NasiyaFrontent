@@ -1,32 +1,90 @@
-import { useState } from "react";
+// src/pages/dashboard/CreateOrEditMijoz.tsx
+import { useState, useEffect } from "react";
 import { ArrowLeft, Trash2, Image as ImageIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import FormInput from "../../components/InputComp";
 import { formatPhone } from "../../components/FormatPhone";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { API } from "../../hooks/getEnv";
 import { useCookies } from "react-cookie";
 import { toast, ToastContainer } from "react-toastify";
 
-const normalizePhone = (v: string) => {
+const normalizePhoneForApi = (v: string) => {
   const d = v.replace(/\D/g, "");
   return d.startsWith("998") ? d : `998${d}`;
 };
 
-export default function CreateMijoz() {
+const normalizeMijozFromApi = (m: any) => {
+  const phones: string[] =
+    Array.isArray(m?.phones) && m.phones.length
+      ? m.phones
+      : Array.isArray(m?.PhoneClient)
+      ? m.PhoneClient.map((p: any) => p?.phoneNumber).filter(Boolean)
+      : m?.phone
+      ? [m.phone]
+      : [];
+
+  const images: string[] =
+    Array.isArray(m?.images) && m.images.length
+      ? m.images
+      : Array.isArray(m?.ImagesClient)
+      ? m.ImagesClient.map((x: any) => x?.url).filter(Boolean)
+      : [];
+  console.log(images, "images");
+
+  return {
+    id: m?.id ?? "",
+    name: m?.name ?? "",
+    address: m?.address ?? "",
+    note: m?.note ?? "",
+    phones,
+    images,
+  };
+};
+
+export default function CreateOrEditMijoz() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
+  const isEdit = Boolean(id);
   const [cookies] = useCookies(["token"]);
   const token = cookies.token as string | undefined;
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
 
-  const [name, setName] = useState("Test Testov");
-  const [phones, setPhones] = useState<string[]>(["+998911234567"]);
+  const [name, setName] = useState("");
+  const [phones, setPhones] = useState<string[]>(["+998"]);
+
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
   const [images, setImages] = useState<(File | null)[]>([null, null]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [showNote, setShowNote] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
+
+  const { data } = useQuery({
+    queryKey: ["mijoz", "info", id],
+    enabled: isEdit && !!token && !!id,
+    queryFn: async () => {
+      const res = await axios.get(`${API}/mijoz/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return normalizeMijozFromApi(res.data);
+    },
+    staleTime: 0,
+  });
+
+  useEffect(() => {
+    if (data && isEdit) {
+      setName(data.name || "");
+      setPhones(data.phones?.length ? data.phones : ["+998"]);
+      setAddress(data.address || "");
+      setNote(data.note || "");
+      setImageUrls(data.images || []);
+      setImages(Array(data.images?.length || 1).fill(null));
+      setShowNote(Boolean(data.note));
+    }
+  }, [data, isEdit]);
 
   const addPhone = () => setPhones((p) => [...p, ""]);
   const removePhone = (idx: number) =>
@@ -40,9 +98,17 @@ export default function CreateMijoz() {
     input.accept = "image/*";
     input.onchange = () => {
       const file = input.files?.[0] ?? null;
-      setImages((arr) => {
-        const next = [...arr];
+      if (!file) return;
+
+      setImages((prev) => {
+        const next = [...prev];
         next[i] = file;
+        return next;
+      });
+
+      setImageUrls((prev) => {
+        const next = [...prev];
+        next[i] = URL.createObjectURL(file);
         return next;
       });
     };
@@ -55,50 +121,89 @@ export default function CreateMijoz() {
       phones: string[];
       address: string;
       note?: string;
-      images: (File | null)[];
+      images: string[];
     }) => {
-      const phones = payload.phones
-        .map((p) => normalizePhone(p))
+      const normalizedPhones = payload.phones
+        .map((p) => normalizePhoneForApi(p))
         .filter((p) => p.length >= 12);
 
       const body = {
         name: payload.name.trim(),
         address: payload.address.trim(),
         note: (payload.note || "").trim(),
-        phones,
-        images: [] as string[],
+        phones: normalizedPhones,
+        images: payload.images,
       };
 
-      return axios.post(`${API}/mijoz`, body, {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        withCredentials: true,
-      });
+      if (isEdit) {
+        return axios.patch(`${API}/mijoz/${id}`, body, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+      } else {
+        return axios
+          .post(`${API}/mijoz`, body, {
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          })
+          .then((res) => res.data);
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["mijoz"] });
+    onSuccess: async () => {
+      qc.invalidateQueries({ queryKey: ["mijoz", "list"] });
+      if (isEdit && id) {
+        const res = await axios.get(`${API}/mijoz/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      toast.success("Mijoz muvaffaqiyatli yaratildi");
-
-      navigate(-1);
+        qc.setQueryData(["mijoz", "info", id], normalizeMijozFromApi(res.data));
+      }
+      toast.success(isEdit ? "Mijoz yangilandi" : "Mijoz yaratildi");
+      setTimeout(() => {
+        navigate(isEdit ? `/mijoz/${id}` : "/mijoz");
+      }, 500);
     },
+
     onError: (err: any) => {
-      console.log("ERR:", err?.response?.data);
-      toast.error(err?.response?.data?.message || "Yaratishda xatolik");
+      toast.error(err?.response?.data?.message || "Xatolik yuz berdi");
     },
   });
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate({ name, phones, address, note, images });
+
+    const uploadImages = async (files: (File | null)[]) => {
+      const urls: string[] = [...imageUrls];
+      for (const file of files) {
+        if (!file) continue;
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await axios.post(`${API}/upload`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        urls.push(res.data.image);
+      }
+      return urls;
+    };
+
+    const finalImages = await uploadImages(images);
+    console.log(finalImages);
+
+    mutation.mutate({ name, phones, address, note, images: finalImages });
   };
 
   return (
     <>
       <ToastContainer />
-      <form onSubmit={onSubmit} className=" containers min-h-[100dvh] bg-white">
+      <form onSubmit={onSubmit} className="containers min-h-[100dvh] bg-white">
         <div className="sticky top-0 z-10 bg-white/90 backdrop-blur">
           <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-2">
             <button
@@ -109,7 +214,7 @@ export default function CreateMijoz() {
               <ArrowLeft />
             </button>
             <h1 className="text-[18px] font-semibold !pl-[80px]">
-              Mijoz yaratish
+              {isEdit ? "Mijozni tahrirlash" : "Mijoz yaratish"}
             </h1>
           </div>
         </div>
@@ -150,7 +255,7 @@ export default function CreateMijoz() {
                 )}
               </div>
             ))}
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between">
               <button
                 type="button"
                 onClick={addPhone}
@@ -158,6 +263,15 @@ export default function CreateMijoz() {
               >
                 + Ko‘proq qo‘shish
               </button>
+
+              <label className="text-[13px] text-slate-500 flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showRaw}
+                  onChange={(e) => setShowRaw(e.target.checked)}
+                />
+                Formatlamasdan yozish
+              </label>
             </div>
           </div>
 
@@ -192,6 +306,15 @@ export default function CreateMijoz() {
               Rasm biriktirish
             </div>
             <div className="grid grid-cols-2 gap-3">
+              {imageUrls.map((url, i) => (
+                <img
+                  key={`img-${i}`}
+                  src={url}
+                  alt="Mavjud rasm"
+                  className="aspect-[4/3] rounded-[16px] border border-slate-200 object-cover"
+                />
+              ))}
+
               {images.map((file, i) => (
                 <button
                   type="button"
@@ -224,7 +347,11 @@ export default function CreateMijoz() {
               disabled={mutation.isPending}
               className="w-full h-12 rounded-[14px] bg-[#3E7BFA] text-white text-[16px] font-semibold active:scale-[0.99] disabled:opacity-60"
             >
-              {mutation.isPending ? "Yuborilmoqda…" : "Saqlash"}
+              {mutation.isPending
+                ? "Yuborilmoqda…"
+                : isEdit
+                ? "Yangilash"
+                : "Saqlash"}
             </button>
           </div>
         </div>

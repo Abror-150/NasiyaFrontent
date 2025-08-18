@@ -7,7 +7,7 @@ const Calendar = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="containers ">
+    <div className="containers h-[100vh] ">
       <div className="pt-[40px] relative flex items-center justify-center">
         <Heading classList="!font-bold" tag="h2">
           Kalendar

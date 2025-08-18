@@ -1,7 +1,7 @@
 import { Calendar } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/uz";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { API } from "../hooks/getEnv";
@@ -56,22 +56,16 @@ const CalendarPage = () => {
         headers: { Authorization: `Bearer ${token}` },
         params: { year, month: String(month).padStart(2, "0") },
       });
-      console.log(res.data, "d");
 
       return res.data as { days: number[] };
     },
     enabled: !!token,
   });
 
-  const daysWithPayments = useMemo(
-    () => new Set(daysMeta?.days ?? []),
-    [daysMeta]
-  );
-
   const onSelect = (date: dayjs.Dayjs) => setSelectedDate(date);
 
   return (
-    <div className="px-4 pt-2 pb-6 mx-auto h-[120vh]">
+    <div className="px-4 pt-2 pb-6 mx-auto h-[100vh]">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-[22px] font-semibold">
           {selectedDate.format("MMMM")}, {selectedDate.year()}
@@ -113,8 +107,8 @@ const CalendarPage = () => {
       <Calendar
         rootClassName="[&_.ant-picker-panel-container]:shadow-none
     [&_.ant-picker-content]:!mx-0
-    [&_.ant-picker-content_thead]:hidden   /* inglizcha haftalik headerni o'chiradi */
-    [&_.ant-picker-content]:!pt-0          /* yuqoridagi bo'sh joyni kamaytiradi */"
+    [&_.ant-picker-content_thead]:hidden   
+    [&_.ant-picker-content]:!pt-0"
         fullscreen={false}
         value={selectedDate}
         onSelect={onSelect}
@@ -122,8 +116,15 @@ const CalendarPage = () => {
         dateFullCellRender={(date) => {
           const isCurrentMonth = date.month() === selectedDate.month();
           const isSelected = date.isSame(selectedDate, "day");
+
           const hasPayment =
-            isCurrentMonth && daysWithPayments.has(date.date());
+            isCurrentMonth && (daysMeta?.days ?? []).includes(date.date());
+
+          const isPaid =
+            isCurrentMonth &&
+            dayList?.some(
+              (d) => dayjs(d.payDate).isSame(date, "day") && d.remaining === 0
+            );
 
           return (
             <div
@@ -136,14 +137,16 @@ const CalendarPage = () => {
                   : "bg-[#EFEFEF] text-gray-400",
               ].join(" ")}
             >
-              {hasPayment && (
+              {hasPayment && !isPaid && (
                 <span className="absolute left-[4px] top-[4px] w-2 h-2 rounded-full bg-green-500" />
+              )}
+              {isPaid && (
+                <span className="absolute left-[4px] top-[4px] w-2 h-2 rounded-full bg-gray-400" />
               )}
               {date.date()}
             </div>
           );
         }}
-        className="[&_.ant-picker-panel-container]:shadow-none [&_.ant-picker-content]:!mx-0"
       />
 
       <div className="mt-4">
@@ -155,21 +158,24 @@ const CalendarPage = () => {
 
         <div className="bg-[#F5F5F7] px-4 pb-4 rounded-b-[16px]">
           <div className="space-y-3">
-            {(dayList ?? []).map((item) => (
-              <div
-                key={`${item.name}-${item.phone}-${item.payDate ?? ""}`}
-                className="bg-white p-4 rounded-2xl shadow-sm"
-              >
-                <p className="text-[15px] font-semibold text-black">
-                  {item.name}
-                </p>
-                <p className="text-[13px] text-gray-600">
-                  UZS {item.remaining.toLocaleString("uz-UZ")}
-                </p>
-              </div>
-            ))}
+            {(dayList ?? [])
+              .filter((item) => item.remaining !== 0)
+              .map((item) => (
+                <div
+                  key={`${item.name}-${item.phone}-${item.payDate ?? ""}`}
+                  className="bg-white p-4 rounded-2xl shadow-sm"
+                >
+                  <p className="text-[15px] font-semibold text-black">
+                    {item.name}
+                  </p>
+                  <p className="text-[13px] text-gray-600">
+                    UZS {item.remaining.toLocaleString("uz-UZ")}
+                  </p>
+                </div>
+              ))}
 
-            {(!dayList || dayList.length === 0) && (
+            {(!dayList ||
+              dayList.filter((i) => i.remaining !== 0).length === 0) && (
               <div className="bg-white p-4 rounded-2xl shadow-sm">
                 <p className="text-[13px] text-gray-500">
                   Bu kunda to‘lov kutilmaydi.

@@ -67,7 +67,7 @@ export default function NasiyaDetail() {
 
   if (isLoading) {
     return (
-      <div className="containers min-h-[100dvh] flex items-center justify-center">
+      <div className="containers h-[100vh] flex items-center justify-center">
         <LoadingOutlined
           className="text-3xl text-slate-400 animate-spin"
           aria-label="Yuklanmoqda"
@@ -90,8 +90,8 @@ export default function NasiyaDetail() {
     .filter(Boolean);
 
   return (
-    <div className="containers h-[120vh] bg-white !pt-[40px]">
-      <div className="sticky top-0 z-20 bg-white/95 border-b">
+    <div className="containers h-[100vh] bg-white !pt-[30px]">
+      <div className=" top-0 z-20 bg-white/95 border-b">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
@@ -109,7 +109,7 @@ export default function NasiyaDetail() {
         <div className="h-[3px] bg-violet-500 w-full" />
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-4 space-y-4 !pt-[50px]">
+      <div className="max-w-md mx-auto px-4 py-4 space-y-4 !pt-[30px]">
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="text-sm text-slate-600 mb-1">Sana</div>
@@ -177,7 +177,7 @@ export default function NasiyaDetail() {
           </div>
         )}
 
-        <div className="pt-2 ">
+        <div className="pt-[54px]">
           <button
             type="button"
             onClick={() =>
