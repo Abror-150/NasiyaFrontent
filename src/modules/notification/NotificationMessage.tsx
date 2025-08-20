@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCookies } from "react-cookie";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import type { chatType, notificationType } from "../../types/MessageType";
+import type { chatType } from "../../types/MessageType";
 import NotificationMessageNotFound from "./NotificationNotFound";
 import { formatPhone } from "../../components/FormatPhone";
 import Text from "../../components/Text";
@@ -13,7 +13,6 @@ import { LoadingOutlined } from "@ant-design/icons";
 export const Message = () => {
   const [cookies] = useCookies(["token"]);
   const navigate = useNavigate();
-  const { chatId } = useParams();
 
   const { data = [], isLoading } = useQuery<chatType[]>({
     queryKey: ["messages"],
