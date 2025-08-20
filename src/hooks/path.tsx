@@ -1,14 +1,19 @@
 import { HisobotIcon, HomeIcon, MijozIcon, SozlamaIcon } from "../assets/icons";
 import SuccessPage from "../components/SuccesPage";
+import Message from "../modules/notification/NotificationMessage";
 import { Home, Seller, SingleMijoz } from "../pages/dashboard";
 import Calendar from "../pages/dashboard/Calendar";
+import CreateNamuna from "../pages/dashboard/CreateExample";
 import CreateMijoz from "../pages/dashboard/CreateMijoz";
 import CreateNasiya from "../pages/dashboard/CreateNasiya";
+import Example from "../pages/dashboard/Example";
 import Mijoz from "../pages/dashboard/Mijoz";
+import MySelf from "../pages/dashboard/MySelf";
 import NasiyaDetail from "../pages/dashboard/NasiyaDetail";
 import NasiyaSondirish from "../pages/dashboard/NasiyaSondirish";
 import NotificationMessage from "../pages/dashboard/report/Message";
 import Notification from "../pages/dashboard/report/Notification";
+import Sozlamalar from "../pages/dashboard/Sozlamalar";
 export const paths = {
   home: "/",
   login: "/login",
@@ -25,7 +30,12 @@ export const paths = {
   succes: "/succes",
   mijozUpdate: "/mijoz/edit/:id",
   debtPayment: "/mijoz/:id/debt/:debtId/payment",
-  notificationMessage: "/hisobot/:mijozId",
+  notificationMessage: "/hisobot/:chatId/:mijozId",
+  // message: "/hisobot/:mijozId",
+  example: "/example",
+  createExample: "/namuna/create",
+  updateExample: "/namuna/:id",
+  mySelf: "/special",
 };
 
 export const DashboardLists = [
@@ -95,6 +105,32 @@ export const DashboardLists = [
     path: paths.notificationMessage,
     element: <NotificationMessage />,
   },
+  {
+    id: 13,
+    path: paths.example,
+    element: <Example />,
+  },
+  {
+    id: 14,
+    path: paths.createExample,
+    element: <CreateNamuna />,
+  },
+  {
+    id: 15,
+    path: paths.updateExample,
+    element: <CreateNamuna />,
+  },
+  {
+    id: 16,
+    path: paths.sozlama,
+    element: <Sozlamalar />,
+  },
+  {
+    id: 17,
+    path: paths.mySelf,
+    element: <MySelf />,
+  },
+  
 ];
 
 export const DashboardNavLists = [

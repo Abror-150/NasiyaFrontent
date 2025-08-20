@@ -46,6 +46,7 @@ export default function SingleMijoz() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [favorite, setFavorite] = useState(false);
 
   const { data: client } = useQuery({
     queryKey: ["mijoz", "info", id],
@@ -112,6 +113,18 @@ export default function SingleMijoz() {
   const debts = data.debts ?? [];
   const empty = debts.length === 0 || (data.total ?? 0) <= 0;
 
+  async function toggleFavorite(e: React.MouseEvent) {
+    e.stopPropagation();
+    try {
+      const res = await axios.patch(`${API}/mijoz/${id}/favorite`);
+      console.log(res.data);
+
+      setFavorite(res.data.star);
+    } catch (err) {
+      console.error("Favorite o‘zgartirishda xato:", err);
+    }
+  }
+
   return (
     <>
       <ToastContainer />
@@ -126,6 +139,21 @@ export default function SingleMijoz() {
             </button>
             <h1 className="text-[18px] font-semibold">{client?.name}</h1>
             <div className="ml-auto relative">
+              <button
+                onClick={toggleFavorite}
+                className="shrink-0 text-amber-400 cursor-pointer pr-[15px] mt-[5px]"
+                title="Sevimlilar"
+              >
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill={favorite ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                </svg>
+              </button>
               <button
                 className="cursor-pointer"
                 onClick={() => setMenuOpen((p) => !p)}

@@ -4,7 +4,7 @@ type FormInputProps = {
   label?: string;
   required?: boolean;
   placeholder?: string;
-  value?: string |number;
+  value?: string | number;
   onChange?: (v: string) => void;
   name?: string;
   type?: React.HTMLInputTypeAttribute;

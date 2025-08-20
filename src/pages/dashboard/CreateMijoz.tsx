@@ -81,7 +81,7 @@ export default function CreateOrEditMijoz() {
       setAddress(data.address || "");
       setNote(data.note || "");
       setImageUrls(data.images || []);
-      setImages(Array(data.images?.length || 1).fill(null));
+      setImages([]);
       setShowNote(Boolean(data.note));
     }
   }, [data, isEdit]);
@@ -103,12 +103,6 @@ export default function CreateOrEditMijoz() {
       setImages((prev) => {
         const next = [...prev];
         next[i] = file;
-        return next;
-      });
-
-      setImageUrls((prev) => {
-        const next = [...prev];
-        next[i] = URL.createObjectURL(file);
         return next;
       });
     };
@@ -177,7 +171,7 @@ export default function CreateOrEditMijoz() {
     e.preventDefault();
 
     const uploadImages = async (files: (File | null)[]) => {
-      const urls: string[] = [...imageUrls];
+      const urls: string[] = [];
       for (const file of files) {
         if (!file) continue;
         const formData = new FormData();
@@ -188,15 +182,14 @@ export default function CreateOrEditMijoz() {
             "Content-Type": "multipart/form-data",
           },
         });
-
         urls.push(res.data.image);
       }
       return urls;
     };
 
-    const finalImages = await uploadImages(images);
-    console.log(finalImages);
+    const finalUploaded = await uploadImages(images);
 
+    const finalImages = [...imageUrls, ...finalUploaded];
     mutation.mutate({ name, phones, address, note, images: finalImages });
   };
 

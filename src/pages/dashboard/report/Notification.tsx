@@ -5,7 +5,7 @@ import HistoryPayment from "../../../modules/notification/HistoryPayment";
 import Heading from "../../../components/Heading";
 import Message from "../../../modules/notification/NotificationMessage";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCookies } from "react-cookie";
 import { API } from "../../../hooks/getEnv";
 import axios from "axios";
@@ -15,9 +15,10 @@ const Notification = () => {
     "Xabarlar tarixi" | "To‘lovlar tarixi"
   >("Xabarlar tarixi");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [openModal, setOpenModal] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [selectedClient, _] = useState<any>(null);
   const [cookies] = useCookies(["token"]);
 
   const { data: clients = [], isLoading } = useQuery({
@@ -30,8 +31,6 @@ const Notification = () => {
         .then((res) => res.data),
   });
 
-  console.log(clients, "cl");
-
   return (
     <>
       <div className="containers !mt-[30px] !pb-[18px] border-b-[1px] border-[#ECECEC] !mb-[16px]">
@@ -39,7 +38,10 @@ const Notification = () => {
           <Heading tag="h2" classList="!font-bold !text-[22px]">
             Hisobot
           </Heading>
-          <button>
+          <button
+            className="cursor-pointer"
+            onClick={() => navigate("/example")}
+          >
             <CreateExampleIcon />
           </button>
         </div>
@@ -88,15 +90,34 @@ const Notification = () => {
           renderItem={(client: any) => (
             <List.Item
               onClick={async () => {
-                if (client.chatId) {
-                  navigate(`/hisobot/${client.chatId}`);
-                } else {
-                  const res = await axios.post(
-                    `${API}/message/createChat`,
-                    { mijozId: client.id },
-                    { headers: { Authorization: `Bearer ${cookies.token}` } }
+                try {
+                  let chatId = client.chatId;
+
+                  if (!chatId) {
+                    const res = await axios.post(
+                      `${API}/message/createChat`,
+                      { mijozId: client.id },
+                      { headers: { Authorization: `Bearer ${cookies.token}` } }
+                    );
+                    console.log(res.data, "yaratildi");
+
+                    chatId = res.data.id;
+                    queryClient.invalidateQueries({
+                      queryKey: ["clientsWithoutMessages"],
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: ["message", chatId],
+                    });
+                  }
+
+                  navigate(`/hisobot/${chatId}/${client.id}`, {
+                    state: { client },
+                  });
+                } catch (error) {
+                  console.error(
+                    "Chat yaratishda yoki xabar yuborishda xato:",
+                    error
                   );
-                  navigate(`/hisobot/${res.data.id}`);
                 }
               }}
             >

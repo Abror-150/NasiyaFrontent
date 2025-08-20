@@ -228,12 +228,12 @@ const CreateNasiya = () => {
                   type="button"
                   key={i}
                   onClick={() => handlePick(i)}
-                  className="aspect-[4/3] rounded-[16px] h-[130px]   border border-slate-200 bg-white overflow-hidden p-0"
+                  className="aspect-[4/3] rounded-[16px] h-[130px] border border-slate-200 bg-white overflow-hidden p-0"
                 >
                   {file ? (
                     <img
                       src={URL.createObjectURL(file)}
-                      className="w-[180px] h-full object-cover"
+                      className="w-[180px] h-full object-cover cursor-pointer"
                       alt="Tanlangan rasm"
                     />
                   ) : (

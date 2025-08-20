@@ -17,7 +17,7 @@ export default function MonthSelect({ value, onChange }: MonthSelectProps) {
   return (
     <Select
       value={value}
-      onChange={(v:any) => onChange?.(v)}
+      onChange={(v: any) => onChange?.(v)}
       options={options}
       placeholder="Oyni tanlang"
       style={{ width: "100%", height: 44, borderRadius: 8 }}

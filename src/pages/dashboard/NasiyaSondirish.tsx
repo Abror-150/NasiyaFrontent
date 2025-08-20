@@ -76,7 +76,6 @@ function Modal({ open, onClose, title, children, footer }: any) {
   );
 }
 
-/** Frontda planni lokal yangilash helper */
 const updateLocalDebt = (
   plan: Month[],
   month: number,
@@ -324,7 +323,7 @@ export default function NasiyaSondirish() {
       <div className="sticky top-0 z-20 bg-white/95 border-b">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-2">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(`/mijoz/${id}`)}
             className="p-2 -ml-2 rounded-full hover:bg-slate-100"
           >
             <ArrowLeft />

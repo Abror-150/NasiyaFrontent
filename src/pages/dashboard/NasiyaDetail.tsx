@@ -90,12 +90,12 @@ export default function NasiyaDetail() {
     .filter(Boolean);
 
   return (
-    <div className="containers h-[100vh] bg-white !pt-[30px]">
+    <div className="containers h-[112vh] bg-white !pt-[20px]">
       <div className=" top-0 z-20 bg-white/95 border-b">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className=" flex items-center gap-2">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(`/mijoz/${id}`)}
               className="p-2 -ml-2 rounded-full hover:bg-slate-100"
             >
               <ArrowLeft />
@@ -177,7 +177,7 @@ export default function NasiyaDetail() {
           </div>
         )}
 
-        <div className="pt-[54px]">
+        <div className="pt-[24px]">
           <button
             type="button"
             onClick={() =>

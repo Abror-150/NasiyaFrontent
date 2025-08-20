@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useCookies } from "react-cookie";
@@ -11,7 +11,13 @@ import { SortIcon } from "../../assets/icons";
 const formatUZS = (n: number) =>
   n.toLocaleString("uz-UZ", { maximumFractionDigits: 0 });
 
-type Item = { mijozId: string; name: string; phone: string; total: number };
+type Item = {
+  mijozId: string;
+  name: string;
+  phone: string;
+  total: number;
+  star?: boolean;
+};
 
 export default function Mijoz() {
   const [cookies] = useCookies(["token"]);
@@ -163,12 +169,28 @@ export default function Mijoz() {
     </div>
   );
 }
-
 function ClientCardLike({ item }: { item: Item }) {
   const navigate = useNavigate();
+  const [favorite, setFavorite] = useState(item.star ?? false);
   const debt = item.total ?? 0;
+  useEffect(() => {
+    setFavorite(item.star ?? false);
+  }, [item.star]);
+
   const goDetail = () =>
     navigate(`/mijoz/${item.mijozId}`, { state: { item } });
+
+  async function toggleFavorite(e: React.MouseEvent) {
+    e.stopPropagation();
+    try {
+      const res = await axios.patch(`${API}/mijoz/${item.mijozId}/favorite`);
+      console.log(res.data);
+
+      setFavorite(res.data.star);
+    } catch (err) {
+      console.error("Favorite o‘zgartirishda xato:", err);
+    }
+  }
 
   return (
     <div
@@ -193,14 +215,15 @@ function ClientCardLike({ item }: { item: Item }) {
         </div>
 
         <button
-          className="shrink-0 text-amber-400"
+          className="shrink-0 text-amber-400 cursor-pointer"
           title="Sevimlilar"
-          onClick={(e) => e.stopPropagation()}
+          onClick={toggleFavorite}
         >
           <svg
             className="h-5 w-5"
             viewBox="0 0 24 24"
-            fill="currentColor"
+            fill={favorite ? "currentColor" : "none"}
+            stroke="currentColor"
             aria-hidden="true"
           >
             <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />

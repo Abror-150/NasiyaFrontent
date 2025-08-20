@@ -22,7 +22,7 @@ export default function SuccessPage() {
       <p className="text-slate-700 mt-1">Muvaffaqiyatli so‘ndirildi</p>
 
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate(-3)}
         className="mt-12 w-full max-w-xs h-12 bg-[#3478F7] text-white rounded-xl active:scale-[0.98]"
       >
         Ortga
