@@ -1,70 +1,43 @@
-# React + TypeScript + Vite
+# 💳 Nasiya Savdo – Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Nasiya Savdo** loyihasining **frontend qismi**.  
+Bu tizim orqali sotuvchilar va adminlar mijozlarni boshqarish, qarz berish va to‘lov jarayonlarini kuzatishlari mumkin.  
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Texnologiyalar (Stack)
 
-## Expanding the ESLint configuration
+- **Frontend Framework:** React.js (Vite bilan)  
+- **UI Library:** Ant Design (antd)  
+- **State Management:** Redux Toolkit / React Query  
+- **HTTP Client:** Axios (JWT interceptor bilan)  
+- **Routing:** React Router DOM v6+  
+- **Form Validation:** React Hook Form + Yup  
+- **Build Tool:** Vite  
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 📌 Asosiy funksiyalar (UI)
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+- 👥 **Mijozlar sahifasi** – mijozlar ro‘yxati, yangi qo‘shish, tahrirlash.  
+- 💵 **Qarz boshqaruvi** – qarz qo‘shish, qarz tafsilotlari, status kuzatish.  
+- 📊 **Oyma-oy to‘lovlar** – 1 oylik, ko‘p oylik yoki qisman to‘lovlarni ko‘rish va boshqarish.  
+- 📈 **Dashboard** – umumiy statistika va grafikalar.  
+- 🔐 **Login / Register** – sotuvchi va admin uchun.  
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ⚙️ O‘rnatish va ishga tushirish
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Reponi clone qiling
+git clone https://github.com/abror-150/nasiya-savdo-frontend.git
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-# NasiyaFrontent
+# Loyihaga kiring
+cd nasiya-savdo-frontend
+
+# Paketlarni o‘rnating
+npm install
+
+# Loyihani ishga tushiring
+npm run dev
